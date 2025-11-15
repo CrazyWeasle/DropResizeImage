@@ -9,7 +9,21 @@ import SwiftUI
 import UIKit
 
 struct ContentView: View {
-    @State var droppedUIImage: UIImage? = nil
+    //MARK: Variable initialization
+    /// All three default values for the view must be overridden in order for an image to display correctly
+    @State var uiImage: UIImage? = nil
+    @State var imageOffset: (x: CGFloat, y: CGFloat) = (0, 0)
+    @State var zoomFactor: CGFloat = 1
+
+    //MARK: Added Image variables
+    @State var editMode: Bool = false
+    @State var addedUIImage: UIImage? = nil
+
+    init(uiImage: UIImage, imageOffset: (x: CGFloat, y: CGFloat), zoomFactor: CGFloat) {
+        self.uiImage = uiImage
+        self.imageOffset = imageOffset
+        self.zoomFactor = zoomFactor
+    }
     
     var body: some View {
         VStack {
@@ -22,11 +36,11 @@ struct ContentView: View {
                     droppedImage
                         .resizable()
                         .scaledToFit()
-                        .position(convertToCoordinates(in: geometry))
+                        .position(position(in: geometry))
                         .dropDestination(for: Data.self) { items, location in
                             guard let imageData = items.first else { return }
                             guard let uiImage = UIImage(data: imageData) else { return }
-                            droppedUIImage = uiImage
+                            addedUIImage = uiImage
                         }
                         .gesture(panGesture().simultaneously(with: zoomGesture()))
                 }
@@ -34,24 +48,41 @@ struct ContentView: View {
                 .clipShape(Circle())
                 .padding()
             }
-            HStack {
-                Button("Cancel") {
-                    
+            if editMode {
+                HStack {
+                    Button("Cancel") {
+                        editMode.toggle()
+                    }
+                    .frame(width: 80)
+                    .foregroundStyle(Color.white)
+                    .background(.blue)
+                    .containerShape(Capsule())
+
+                    Button("Save") {
+                        editMode.toggle()
+                    }
+                    .frame(width: 80)
+                    .foregroundStyle(Color.white)
+                    .background(.blue)
+                    .containerShape(Capsule())
                 }
-                .containerShape(.capsule)
-                
-                Button("Save") {
-                    
+            } else {
+                Button("Edit") {
+                    editMode.toggle()
                 }
-                .containerShape(.capsule)
+                .frame(width: 80)
+                .foregroundStyle(Color.white)
+                .background(.blue)
+                .containerShape(Capsule())
             }
         }
     }
     
     var droppedImage: Image {
-        if let droppedUIImage {
-            return Image(uiImage: droppedUIImage)
+        if let addedUIImage {
+            return Image(uiImage: addedUIImage)
         } else {
+            
             return Image(systemName: "person")
         }
     }
@@ -84,8 +115,16 @@ struct ContentView: View {
     }
     
     // MARK: - Panning
+    ///
+    ///
     @State private var steadyStatePanOffset: CGSize = CGSize.zero
     @GestureState private var gesturePanOffset: CGSize = CGSize.zero
+    
+    private func position(in geometry: GeometryProxy) -> CGPoint {
+        let center = geometry.frame(in: .local).center
+        return CGPoint(x: center.x, y: center.y)
+    }
+    
     
     private var panOffset: CGSize {
         (steadyStatePanOffset + gesturePanOffset) * zoomScale
