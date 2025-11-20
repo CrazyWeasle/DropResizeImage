@@ -1,27 +1,20 @@
 //
-//  CroppableImageEditView.swift
+//  CircleCroppedEditor.swift
 //  DropResizeImage
 //
-//  Created by Joe Jarriel on 11/19/25.
-//
-
-//
-//  ContentView.swift
-//  DropResizeImage
-//
-//  Created by Joe Jarriel on 11/12/25.
+//  Created by Joe Jarriel on 11/20/25.
 //
 import OSLog
 import SwiftUI
 import UIKit
 
-struct CircleCroppedImageView: View {
+struct CircleCroppedEditor: View {
     //MARK: Variable initialization
-    @Bindable var editableImageData: EditableImageData
+    @Bindable var profileImage: ProfileImage
     
-    @State var editableUIImage: UIImage? = nil
-    @State var imageScaleFactor: CGFloat = 1
-    @State var imagePanOffset: CGSize = .zero
+    @State var workingUIImage: UIImage? = nil
+    @State var workingScale: CGFloat = 1
+    @State var workingOffset: CGSize = .zero
 
     @State var showImagePicker: Bool = false
     @State var editMode: Bool = false
@@ -38,36 +31,36 @@ struct CircleCroppedImageView: View {
                         .scaleEffect(scaleFactor)
                         .position(position(in: geometry))
                         .clipShape(Circle())
+                        .contentShape(Circle())
                         .gesture(editMode ? panGesture().simultaneously(with: scaleGesture()) : nil)
                 }
             }
-            .frame(width: 200, height: 200)
             .onTapGesture(count: 2) { editMode ? showImagePicker.toggle() : () }
             .padding()
             .sheet(isPresented: $showImagePicker) {
-                ImagePicker(selectedImage: $editableUIImage)
+                ImagePicker(selectedImage: $workingUIImage)
             }
             .onAppear() {
-                editableUIImage = editableImageData.uiImage
-                imageScaleFactor = editableImageData.scaleFactor
-                imagePanOffset = editableImageData.panOffset
+                workingUIImage = profileImage.uiImage
+                workingScale = profileImage.scaleFactor
+                workingOffset = profileImage.panOffset
             }
             // MARK: Edit Mode/View Mode Buttons
             if editMode {
                 HStack {
                     Button("Cancel") {
-                        editableUIImage = editableImageData.uiImage
-                        imageScaleFactor = editableImageData.scaleFactor
-                        imagePanOffset = editableImageData.panOffset
+                        workingUIImage = profileImage.uiImage
+                        workingScale = profileImage.scaleFactor
+                        workingOffset = profileImage.panOffset
                         editMode = false
                     }
                     .buttonStyle(CapsuleButtonStyle())
                     
                     Button("Save") {
-                        if let editableUIImage {
-                            editableImageData.updateImageData(editableUIImage)
-                            editableImageData.scaleFactor = imageScaleFactor
-                            editableImageData.panOffset = imagePanOffset
+                        if let workingUIImage {
+                            profileImage.setImage(workingUIImage)
+                            profileImage.scaleFactor = workingScale
+                            profileImage.panOffset = workingOffset
                         }
                         editMode = false
                     }
@@ -75,9 +68,9 @@ struct CircleCroppedImageView: View {
                 }
             } else {
                 Button("Edit") {
-                    editableUIImage = editableImageData.uiImage
-                    imageScaleFactor = editableImageData.scaleFactor
-                    imagePanOffset = editableImageData.panOffset
+                    workingUIImage = profileImage.uiImage
+                    workingScale = profileImage.scaleFactor
+                    workingOffset = profileImage.panOffset
                     editMode = true
                 }
                 .buttonStyle(CapsuleButtonStyle())
@@ -87,10 +80,10 @@ struct CircleCroppedImageView: View {
     
     //MARK: Image in view
     private var editableImage: Image {
-        if let editableUIImage {
-            return Image(uiImage: editableUIImage)
+        if let workingUIImage {
+            return Image(uiImage: workingUIImage)
         } else {
-            return Image(systemName: "plus")
+            return Image(systemName: "questionmark.circle.fill")
         }
             
     }
@@ -107,7 +100,7 @@ struct CircleCroppedImageView: View {
     }
 
     private var currentPosition: CGSize {
-        imagePanOffset + gesturePanOffset
+        workingOffset + gesturePanOffset
     }
     
     private func panGesture() -> some Gesture {
@@ -116,7 +109,7 @@ struct CircleCroppedImageView: View {
                 gesturePanOffset = latestDragGestureValue.translation
             }
             .onEnded { finalDragGestureValue in
-                imagePanOffset = imagePanOffset + finalDragGestureValue.translation
+                workingOffset = workingOffset + finalDragGestureValue.translation
             }
     }
     
@@ -124,7 +117,7 @@ struct CircleCroppedImageView: View {
     @GestureState private var gestureScaleFactor: CGFloat = 1
     
     private var scaleFactor: CGFloat {
-        imageScaleFactor * gestureScaleFactor
+        workingScale * gestureScaleFactor
     }
     
     private func scaleGesture() -> some Gesture {
@@ -133,14 +126,11 @@ struct CircleCroppedImageView: View {
                 gestureScaleFactor = latestGestureScale
             }
             .onEnded { gestureScaleAtEnd in
-                let newScale = max(0.2, min(5.0, imageScaleFactor * gestureScaleAtEnd))
-                imageScaleFactor = newScale
+                // Accumulate the scale, don't replace it
+                workingScale = workingScale * gestureScaleAtEnd
             }
     }
 }
 
-#Preview() {
-    ContentView()
-}
 
 

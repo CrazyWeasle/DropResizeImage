@@ -10,31 +10,19 @@ import UIKit
 
 struct ContentView: View {
     //MARK: Variable initialization
-    @State var editableImageData: EditableImageData = EditableImageData()
+    @State var editableImageData: ProfileImage = ProfileImage()
 
     var body: some View {
         @Bindable var editableImageData = editableImageData
         
         VStack {
-            CircleCroppedImageView(editableImageData: editableImageData)
+            CircleCroppedEditor(profileImage: editableImageData)
+                .frame(width: 200, height: 200)
                 .padding()
             
-            ZStack {
-                GeometryReader { geometry in
-                    editableImageData.image
-                        .resizable()
-                        .scaledToFit()
-                        .scaleEffect(editableImageData.scaleFactor)
-                        .position(
-                            x: geometry.frame(in: .local).midX + editableImageData.panOffset.width,
-                            y: geometry.frame(in: .local).midY + editableImageData.panOffset.height
-                        )
-                        .clipShape(Circle())
-                        .contentShape(Circle())
-                }
-            }
-            .frame(width: 250, height: 250)
-            .padding()
+            CircleCroppedImage(profileImage: editableImageData)
+                .frame(width: 200, height: 200)
+                .padding()
         }
     }
 }

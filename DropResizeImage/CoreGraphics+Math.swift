@@ -1,10 +1,8 @@
 //
 //  CGExtensions.swift
-//  DropResizeImage
 //
 //  Created by Joe Jarriel on 11/12/25.
 //
-
 import Foundation
 import SwiftUI
 
